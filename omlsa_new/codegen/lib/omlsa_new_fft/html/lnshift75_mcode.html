@@ -1,0 +1,30 @@
+<!-- saved from url=(0014)about:internet -->
+<pre class="code">
+<span class="srcline"><span class="lineno"><a href="1,163" id="srcline163">163</a></span><span class="line"> </span></span>
+<span class="srcline"><span class="lineno"><a href="1,164" id="srcline164">164</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="1,165" id="srcline165">165</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="1,166" id="srcline166">166</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="1,167" id="srcline167">167</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="1,168" id="srcline168">168</a></span><span class="line"><span class="keyword">function</span> <span class="var type1" id="S95T8U662">y</span> = lnshift(<span class="var type2" id="S96T2V1U665">x</span>,<span class="var type1" id="S97T4U666">t</span>)</span></span>
+<span class="srcline"><span class="lineno"><a href="1,169" id="srcline169">169</a></span><span class="line"><span class="comment">% lnshift -- t circular left shift of 1-d signal</span></span></span>
+<span class="srcline"><span class="lineno"><a href="1,170" id="srcline170">170</a></span><span class="line"><span class="comment">%  Usage</span></span></span>
+<span class="srcline"><span class="lineno"><a href="1,171" id="srcline171">171</a></span><span class="line"><span class="comment">%    y = lnshift(x,t)</span></span></span>
+<span class="srcline"><span class="lineno"><a href="1,172" id="srcline172">172</a></span><span class="line"><span class="comment">%  Inputs</span></span></span>
+<span class="srcline"><span class="lineno"><a href="1,173" id="srcline173">173</a></span><span class="line"><span class="comment">%    x   1-d signal</span></span></span>
+<span class="srcline"><span class="lineno"><a href="1,174" id="srcline174">174</a></span><span class="line"><span class="comment">%  Outputs</span></span></span>
+<span class="srcline"><span class="lineno"><a href="1,175" id="srcline175">175</a></span><span class="line"><span class="comment">%    y   1-d signal</span></span></span>
+<span class="srcline"><span class="lineno"><a href="1,176" id="srcline176">176</a></span><span class="line"><span class="comment">%        y(i) = x(i+t) for i+t &lt; n</span></span></span>
+<span class="srcline"><span class="lineno"><a href="1,177" id="srcline177">177</a></span><span class="line"><span class="comment">%           y(i) = x(i+t-n) else</span></span></span>
+<span class="srcline"><span class="lineno"><a href="1,178" id="srcline178">178</a></span><span class="line"><span class="comment">%</span></span></span>
+<span class="srcline"><span class="lineno"><a href="1,179" id="srcline179">179</a></span><span class="line"><span class="comment">% Copyright (c) 2000. Prof Israel Cohen.</span></span></span>
+<span class="srcline"><span class="lineno"><a href="1,180" id="srcline180">180</a></span><span class="line"><span class="comment">% All rights reserved. </span></span></span>
+<span class="srcline"><span class="lineno"><a href="1,181" id="srcline181">181</a></span><span class="line"><span class="comment">% ***************************************************************@</span></span></span>
+<span class="srcline"><span class="lineno"><a href="1,182" id="srcline182">182</a></span><span class="line"><span class="mxinfo " id="T36:U4"><span class="var type1" id="S98T36U669">szX</span>=<span class="mxinfo " id="T36:U6">size(<span class="var type1" id="S96T2U672">x</span>)</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="1,183" id="srcline183">183</a></span><span class="line"><span class="keyword">if</span> <span class="var type1" id="S98T36U677">szX</span>(1)&gt;1</span></span>
+<span class="srcline"><span class="lineno"><a href="1,184" id="srcline184">184</a></span><span class="line">    <span class="mxinfo " id="T4:U9"><span class="var type1" id="S100T4U682">n</span>=<span class="mxinfo " id="T4:U11"><span class="var type1" id="S98T36U684">szX</span>(1)</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="1,185" id="srcline185">185</a></span><span class="line">    <span class="mxinfo " id="T8:U13"><span class="var type1" id="S95T8U688">y</span>=<span class="mxinfo " id="T8:U15">[<span class="mxinfo " id="T37:U16"><span class="var type1" id="S96T2U692">x</span>(<span class="mxinfo " id="T38:U18">(<span class="mxinfo " id="T4:U19"><span class="mxinfo " id="T4:U20">1</span>+<span class="var type1" id="S97T4U697">t</span></span>):<span class="var type1" id="S100T4U698">n</span></span>)</span>; <span class="mxinfo " id="T37:U23"><span class="var type1" id="S96T2U701">x</span>(<span class="mxinfo " id="T38:U25"><span class="mxinfo " id="T4:U26">1</span>:<span class="var type1" id="S97T4U704">t</span></span>)</span>]</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="1,186" id="srcline186">186</a></span><span class="line"><span class="keyword">else</span></span></span>
+<span class="srcline"><span class="lineno"><a href="1,187" id="srcline187">187</a></span><span class="line">    <span class="var type0" id="S100T0U708">n</span>=<span class="var type0" id="S98T0U710">szX</span>(2);</span></span>
+<span class="srcline"><span class="lineno"><a href="1,188" id="srcline188">188</a></span><span class="line">    <span class="var type0" id="S95T0U714">y</span>=[<span class="var type0" id="S96T0U718">x</span>((1+<span class="var type0" id="S97T0U723">t</span>):<span class="var type0" id="S100T0U724">n</span>) <span class="var type0" id="S96T0U726">x</span>(1:<span class="var type0" id="S97T0U729">t</span>)];</span></span>
+<span class="srcline"><span class="lineno"><a href="1,189" id="srcline189">189</a></span><span class="line"><span class="keyword"><span class="keyword">end</span></span></span></span>
+</pre>

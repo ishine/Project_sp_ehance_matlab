@@ -1,0 +1,110 @@
+<!DOCTYPE HTML>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Fixed-Point Report for nlms</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style>
+	body { font-family: monospace; }
+	h2 { font-family: Arial, Helvetica, sans-serif; color: #990000; margin-top: 50px; }
+	table,th,td { border: 1px solid black; }
+	table { margin-top: 30px; }
+	th { align: center; font-weight: bold; }
+	tr.h { background-color: #99CCFF; }
+	tr.a { background-color: #EEEEFF; }
+	tr.b { background-color: #FFFFFF; }
+	tr.c { background-color: #FFA500; }
+	tr.a td, tr.b td { border-style: none; }
+	td.left { text-align: left; }
+	td.right { text-align: right; }
+	td.center { text-align: center; }
+	td.bold { font-weight: bold; }
+	pre { padding: 0px; margin: 0px; }
+	span { font-style: italic; }
+	.code, .code tr, .code th, .code td { border: none; border-collapse: collapse; }
+	.padd { padding-left: 5px; }
+	td.cov, th.cov { width: 50px; height: 20px; text-align: center; font-weight: bold; border-right: 2px solid black; cell-spacing: 0px; }
+	td.cov { vertical-align: top; }
+	td.black { color: #000000; font-weight: bold; padding-top: 4px; }
+	td.white { color: #FFFFFF; font-weight: bold; padding-top: 4px; }
+	.code th { font-weight: bold; border-bottom: 2px solid black; }
+</style>
+</head>
+<body>
+<h3>Generated on  2019-04-24 14:01:18</h3>
+<p>The following table shows fixed point instrumentation results</p>
+<h2>Fixed-Point Report <span>nlms<span></h2>
+<TABLE class="code">
+<TR>
+<TH class="cov padd">Simulation Coverage</TH>
+<TH>Code</TH>
+</TR>
+<TR>
+<TD class="cov white" style="background-color: rgb(5,112,9);">100%</TD>
+<TD class="padd"><pre>function [e]=   nlms(d, u, Pest,A_st, N ) 
+
+     Nflt = 256; omega = 0.898;  alpha = 0.072;
+      e = zeros(N,1);
+     
+</pre></TD>
+</TR>
+<TR>
+<TD class="cov black" style="background-color: rgb(255,160,118);">Once</TD>
+<TD class="padd"><pre>     for k = 1: N
+
+     Y_Frame_Block = u(k:Nflt+k-1);      
+     Y_Frame_up = d(k);   
+     yB =  Y_Frame_Block' * Y_Frame_Block;  
+    %% apply the coeff             
+     Y_Down = A_st'*Y_Frame_Block;        
+     yout = Y_Frame_up - Y_Down ;        
+     e(k) = yout;  
+    %% update the coeff  
+
+     Pest = omega * Pest + (1-omega) * yB;          
+     mu = alpha ./( Pest + 1e-2);     
+     A_st = A_st +  mu*yout.* (Y_Frame_Block) ;  
+     
+     end</pre></TD>
+</TR>
+<TR>
+<TD class="cov white" style="background-color: rgb(5,112,9);">100%</TD>
+<TD class="padd"><pre>
+end</pre></TD>
+</TR>
+</TABLE>
+<TABLE><TR class="h"><th>Variable Name</th><th>Type</th><th>Sim Min</th><th>Sim Max</th><th>Static Min</th><th>Static Max</th><th>Whole Number</th><th>ProposedType <BR /> (Best For WL = 16)</th></TR><TR class="a">
+<TD class="left">A_st</TD><TD class="left">double 256 x 1 </TD><TD class="right">-0.01673583902126758</TD><TD class="right">0.01941129156737807</TD><TD class="right"></TD><TD class="right"></TD><TD class="left">No</TD><TD class="left">numerictype(1, 16, 20)</TD></TR>
+<TR class="b">
+<TD class="left">N</TD><TD class="left">double</TD><TD class="right">128</TD><TD class="right">128</TD><TD class="right"></TD><TD class="right"></TD><TD class="left">Yes</TD><TD class="left">numerictype(0, 8, 0)</TD></TR>
+<TR class="a">
+<TD class="left">Nflt</TD><TD class="left">double</TD><TD class="right">256</TD><TD class="right">256</TD><TD class="right"></TD><TD class="right"></TD><TD class="left">Yes</TD><TD class="left">numerictype(0, 9, 0)</TD></TR>
+<TR class="b">
+<TD class="left">Pest</TD><TD class="left">double 256 x 1 </TD><TD class="right">0</TD><TD class="right">93.61776546621645</TD><TD class="right"></TD><TD class="right"></TD><TD class="left">No</TD><TD class="left">numerictype(0, 16, 9)</TD></TR>
+<TR class="a">
+<TD class="left">Y_Down</TD><TD class="left">double</TD><TD class="right">-0.12830453333318192</TD><TD class="right">0.0979733499319305</TD><TD class="right"></TD><TD class="right"></TD><TD class="left">No</TD><TD class="left">numerictype(1, 16, 17)</TD></TR>
+<TR class="b">
+<TD class="left">Y_Frame_Block</TD><TD class="left">double :384 x 1 </TD><TD class="right">-2</TD><TD class="right">3</TD><TD class="right"></TD><TD class="right"></TD><TD class="left">Yes</TD><TD class="left">numerictype(1, 3, 0)</TD></TR>
+<TR class="a">
+<TD class="left">Y_Frame_up</TD><TD class="left">double</TD><TD class="right">-2</TD><TD class="right">2</TD><TD class="right"></TD><TD class="right"></TD><TD class="left">Yes</TD><TD class="left">numerictype(1, 3, 0)</TD></TR>
+<TR class="b">
+<TD class="left">alpha</TD><TD class="left">double</TD><TD class="right">0.072</TD><TD class="right">0.072</TD><TD class="right"></TD><TD class="right"></TD><TD class="left">No</TD><TD class="left">numerictype(0, 16, 19)</TD></TR>
+<TR class="a">
+<TD class="left">d</TD><TD class="left">double 128 x 1 </TD><TD class="right">-2</TD><TD class="right">2</TD><TD class="right"></TD><TD class="right"></TD><TD class="left">Yes</TD><TD class="left">numerictype(1, 3, 0)</TD></TR>
+<TR class="b">
+<TD class="left">e</TD><TD class="left">double :Inf x 1 </TD><TD class="right">-2.0382239282363925</TD><TD class="right">2.029761067057229</TD><TD class="right"></TD><TD class="right"></TD><TD class="left">No</TD><TD class="left">numerictype(1, 16, 13)</TD></TR>
+<TR class="a">
+<TD class="left">k</TD><TD class="left">double</TD><TD class="right">1</TD><TD class="right">128</TD><TD class="right"></TD><TD class="right"></TD><TD class="left">Yes</TD><TD class="left">numerictype(0, 8, 0)</TD></TR>
+<TR class="b">
+<TD class="left">mu</TD><TD class="left">double 256 x 1 </TD><TD class="right">0.0007690026525943272</TD><TD class="right">0.007834602829162134</TD><TD class="right"></TD><TD class="right"></TD><TD class="left">No</TD><TD class="left">numerictype(0, 16, 22)</TD></TR>
+<TR class="a">
+<TD class="left">omega</TD><TD class="left">double</TD><TD class="right">0.898</TD><TD class="right">0.898</TD><TD class="right"></TD><TD class="right"></TD><TD class="left">No</TD><TD class="left">numerictype(0, 16, 16)</TD></TR>
+<TR class="b">
+<TD class="left">u</TD><TD class="left">double 384 x 1 </TD><TD class="right">-2</TD><TD class="right">3</TD><TD class="right"></TD><TD class="right"></TD><TD class="left">Yes</TD><TD class="left">numerictype(1, 3, 0)</TD></TR>
+<TR class="a">
+<TD class="left">yB</TD><TD class="left">double</TD><TD class="right">67</TD><TD class="right">96</TD><TD class="right"></TD><TD class="right"></TD><TD class="left">Yes</TD><TD class="left">numerictype(0, 7, 0)</TD></TR>
+<TR class="b">
+<TD class="left">yout</TD><TD class="left">double</TD><TD class="right">-2.0382239282363925</TD><TD class="right">2.029761067057229</TD><TD class="right"></TD><TD class="right"></TD><TD class="left">No</TD><TD class="left">numerictype(1, 16, 13)</TD></TR>
+</TABLE>
+
+</body>
+</html>
