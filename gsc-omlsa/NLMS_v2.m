@@ -1,5 +1,5 @@
 
-fin0 = '.\voice\NLMS';
+fin0 = '..\..\voice\t20_gsc';
   
 fout  = [fin0 '_NLMS_v2'];
 fout1 = [fin0 '_B'];

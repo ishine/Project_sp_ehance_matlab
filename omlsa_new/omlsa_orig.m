@@ -17,7 +17,7 @@ function [y,out]=omlsa(fin,fout)
 % All rights reserved. 
 % ***************************************************************@
 
-fin = './a4';
+fin = '../../voice/meiti_05';
 nin=nargin;
 if nin<2
     fout=[fin,'_origomlsa'];

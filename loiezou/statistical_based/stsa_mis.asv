@@ -1,0 +1,128 @@
+function stsa_mis(filename,outfile)
+
+if nargin<2
+   fprintf('Usage: specsub inFile outFile.wav \n\n');
+   return;
+end
+
+
+[x, Srate, bits]= wavread( filename);	
+
+% =============== Initialize variables ===============
+%
+
+len=floor(20*Srate/1000); % Frame size in samples
+if rem(len,2)==1, len=len+1; end;
+PERC=50; % window overlap in percent of frame size
+len1=floor(len*PERC/100);
+len2=len-len1; 
+
+
+win=hanning(len); %tukey(len,PERC);  % define window
+
+
+
+% Noise magnitude calculations - assuming that the first 6 frames is noise/silence
+%
+nFFT=len;
+nFFT2=len/2;
+noise_mean=zeros(nFFT,1);
+j=1;
+for k=1:5
+   noise_mean=noise_mean+abs(fft(win.*x(j:j+len-1),nFFT));
+   j=j+len;
+end
+noise_mu=noise_mean/5;
+noise_mu2=noise_mu.^2;
+
+%--- allocate memory and initialize various variables
+   
+
+img=sqrt(-1);
+x_old=zeros(len1,1);
+Nframes=floor(length(x)/len2)-1
+xfinal=zeros(Nframes*len2,1);
+
+%===============================  Start Processing =======================================================
+%
+k=1;
+aa=0.98;
+
+for n=1:Nframes 
+   
+  
+   insign=win.*x(k:k+len-1);
+    
+   %--- Take fourier transform of  frame ----
+   
+   spec=fft(insign,nFFT);   
+   sig=abs(spec); % compute the magnitude
+   sig2=sig.^2;
+   
+       gammak=min(sig2./noise_mu2,40);  % post SNR. Limit it to avoid overflows
+       if n==1
+           ksi=aa+(1-aa)*max(gammak-1,0);
+       else
+           ksi=aa*Xk_prev./noise_mu2 + (1-aa)*max(gammak-1,0);     % a priori SNR   
+       end
+     
+       vk=ksi.*gammak./(1+ksi);
+      
+       sig_hat=log(comp_int(vk,gammak,sig));
+       
+       Xk_prev=sig_hat.^2;
+       
+       xi_w= ifft( sig_hat.* exp(img*angle(spec))); 
+	   xi_w= real( xi_w);
+	  
+      
+	% --- Overlap and add ---------------
+    %
+    xfinal(k:k+ len2-1)= x_old+ xi_w(1:len1);
+	x_old= xi_w(len1+ 1: len);
+   
+    if rem(n,20)==0, fprintf('Frame: %d Perc:%4.2f\n',n,n*100/Nframes); end;
+ 
+ k=k+len2;
+end
+%========================================================================================
+
+
+
+if max(abs(xfinal))>1
+   xfinal=0.9*xfinal/(max(abs(xfinal))+0.0001);
+   fprintf('Max amplitude exceeded 1 for file %s\n',filename);   
+end
+
+wavwrite(xfinal,Srate,16,outfile);
+
+return;
+
+% -------- plot SNR ---------------
+%
+timex=0:1000/Srate:Nframes*10;
+subplot(2,1,1),h=plot(timex,x(1:length(timex)));
+set(gca,'Box','off','Xlim',[0 timex(length(timex))],'FontSize',12);
+ylabel('Amplitude');
+
+time2=0:10:(Nframes-1)*10;
+subplot(2,1,2),
+plot(time2,10*log10(hgain));
+
+return;
+
+h=plot(time2,10*log10(ksi_ar),'b',time2,10*log10(gam_ar),'r:');
+
+legend('\xi_k','\gamma_k-1');
+set(h,'Linewidth',1.5);
+set(gca,'FontSize',12,'Box','off','Xlim',[0 time2(length(time2))],'Ylim',[-25 max(10*log10(gam_ar))]);
+xlabel('Time (ms)');
+ylabel(' SNR (dB)');
+
+return;
+
+subplot(3,1,3), %h=plot(time2,20*log10(hgain));
+
+h=plot(20*log10(hgain));
+%set(gca,'Box','off','Xlim',[0 timex(length(timex))],'FontSize',12);
+ylabel('Amplitude');
