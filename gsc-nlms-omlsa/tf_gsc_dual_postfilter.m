@@ -1,5 +1,5 @@
 %function [y,out]=tf_gsc_dual_postfilter(fin, fin2 )
-function [out_om]=tf_gsc_dual_postfilter(y_frame_in , u_frame_in , initflag)
+function [out_om]=tf_gsc_dual_postfilter(y_frame_in , u_frame_in , initflag,arg1,arg2)
 
 % omlsa : Single Channel OM-LSA with IMCRA noise estimator
 % ***************************************************************@
@@ -62,7 +62,7 @@ M_ref=512;		% 1.2) Size of analysis window
 Mo_ref=0.75*M_ref;	% 1.3) Number of overlapping samples in consecutive frames
 
 % 2) Parameters of Noise Spectrum Estimate
-w=1;			% 2.1)  Size of frequency smoothing window function=2*w+1
+w=3;			% 2.1)  Size of frequency smoothing window function=2*w+1
 alpha_s_ref=0.9;	% 2.2)  Recursive averaging parameter for the smoothing operation
 Nwin=8; 	% 2.3)  Resolution of local minima search
 Vwin=15;
@@ -100,7 +100,7 @@ eta_min_dB=-18;	% 4.2) Lower limit constraint
 
 broad_flag=1;               % broad band flag   % new version
 tone_flag=1;                % pure tone flag   % new version
-nonstat='medium';                %Non stationarity  % new version
+nonstat='media';                %Non stationarity  % new version
 
  
 
@@ -169,6 +169,9 @@ if(initflag ==1)
    out_omlsa=zeros(M,1);     
    SPP = zeros(M21, 1);        
    l_mod_lswitch=0;   
+   
+   q_hat = ones(M21,1);
+   
 end
  
      % counter for the first frame which is non-zero    % new version omlsa3
@@ -363,19 +366,10 @@ zero_thres=1e-10;      % new version omlsa3
          LAMBDA_0 = 1.54;
          LAMBDA_Y =   S ./ max(lambda_d, 1e-10);
          LAMBDA_U = S_u ./ max(lambda_d_u, 1e-10);
-          k1_psi = 9; k2_psi = 88;  PSI_0 = 0.20; gamma_0 = 4.6;
+          k1_psi = 9; k2_psi = 64;  PSI_0 = 0.15; gamma_0 = 4.6;
          PSI = zeros(M21,1);  OMEGA = ones(M21,1);  OMEGA_HI = 3; OMEGA_LO = 1;
-         
-%         idx =  LAMBDA_Y > LAMBDA_0 & LAMBDA_U < LAMBDA_0;
-%         PSI(idx) = 1;         
-%         idx_1 = LAMBDA_Y > LAMBDA_0 & LAMBDA_U > LAMBDA_0;
-%         OMEGA(idx_1) = (S(idx_1) - lambda_d(idx_1)) ./ max((S_u(idx_1) - lambda_d_u(idx_1)), 1e-10) ;         
-%         idx_1   = OMEGA   >  OMEGA_HI;         
-%         PSI(idx_1) = 1;         
-%         idx_0    = OMEGA   <=  OMEGA_LO;         
-%         PSI(idx_0) = 0;                  
-%         idx_1_2  =  OMEGA  <= OMEGA_HI  & OMEGA >OMEGA_LO;
-%         PSI(idx_1_2) = (OMEGA(idx_1_2) - OMEGA_LO) ./ max((OMEGA_HI - OMEGA_LO),1e-10);
+         k2_psi  = arg1;  PSI_0 = arg2;
+
 
          % PSI set to be 0 default
          for idx = 1:M21
@@ -401,13 +395,29 @@ zero_thres=1e-10;      % new version omlsa3
            
          PSI_global = mean(PSI(k1_psi:k2_psi));
          
-         q_hat = ones(M21,1); gamma_s = ones(M21,1);
+         q_hat = ones(M21,1); 
+         %gamma_s = ones(M21,1);
  
          gamma_s  = Ya2  ./  max( lambda_d ,1e-10);         
          gamma_s = min(gamma_0,gamma_s); % cannot bigger than gamma_0         
-         idx = gamma_s >1 & PSI_global > PSI_0;      
-      
-         q_hat(idx) = max((gamma_0 - gamma_s(idx)) /(gamma_0 - 1), 1- PSI(idx)  );
+         
+         if PSI_global <= PSI_0
+             q_hat(1:M21) = 1;
+         else             
+             for idx = 1:M21
+                 
+               if(gamma_s(idx)<=1)  
+                   q_hat(idx)  = 1;
+               else
+                    q_hat(idx) = max((gamma_0 - gamma_s(idx)) /(gamma_0 - 1), 1- PSI(idx)); 
+               end
+                          
+             end
+         end
+         
+         % q_hat = 1- q_hat;
+          
+          
           
         %%
         
@@ -415,6 +425,7 @@ zero_thres=1e-10;      % new version omlsa3
         % SPP = 0.56 * SPP + (1 - 0.56) * (PSI_global > PSI_0);
            SPP = 0.56 * SPP + (1 - 0.56) * (PSI > PSI_0);
         
+      
         q =min(q_hat,q_max);%use qhat instead of q
          
         lframe = lframe +1;

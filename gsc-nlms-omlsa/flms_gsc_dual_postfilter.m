@@ -1,5 +1,5 @@
 %function [y,out]=tf_gsc_dual_postfilter(fin, fin2 )
-function [out_om]=flms_gsc_dual_postfilter(y_frame_in , u_frame_in , initflag)
+function [out_om]=flms_gsc_dual_postfilter(y_frame_in , u_frame_in , initflag, arg1,arg2)
 
 % omlsa : Single Channel OM-LSA with IMCRA noise estimator
 % ***************************************************************@
@@ -385,7 +385,10 @@ zero_thres=1e-10;      % new version omlsa3
          idx_1_2  =  OMEGA  <= OMEGA_HI  & OMEGA >OMEGA_LO;
          PSI(idx_1_2) = (OMEGA(idx_1_2) - OMEGA_LO) ./ max((OMEGA_HI - OMEGA_LO),1e-10);
          
-         k1_psi = 9; k2_psi = 113;  PSI_0 = 0.15; gamma_0 = 4.6;
+         k1_psi = 9; k2_psi = arg1;  PSI_0 =arg2; gamma_0 = 4.6;
+         
+         
+         
          
          PSI_global = mean(PSI(k1_psi:k2_psi));
          

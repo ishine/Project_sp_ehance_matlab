@@ -4,18 +4,23 @@ close all; clc; clear all;
 
 fprintf('dual channel gsc + posterfilter \n');
 
-%    -3  -2   -1  0  1  2  3 
+%  -4  -3  -2   -1  0  1  2  3  4
 global SPP;
 
    SPP = zeros(1,1);
 
 Nmic = 2; % mic number 
-Nflt = 128; % fir length
+Nflt = 256;
+
+ % fir length
 Num_c = Nmic*Nflt;
 Dmic = 0.095;
-Speed = 340;
+Speed = 340;alpha = 0.075;  
+ arg1 = 113; arg2 = 0.25;  
+ %arg1 = 80; arg2 = 0.15;  
  
-finl = './voice/t19';
+ CHMOD = 1; % 1: U = X1+X2 /2 B = X1-X2   2: U = NEAR 
+finl = '../../voice/16';
 %finr = './voice/t14r';
 
 
@@ -31,6 +36,8 @@ x1 = x(:,1);
 x2 = x(:,2);
 
 fs = fs1;
+
+
 
 
 fprintf('1st do gsc filter \n');
@@ -73,25 +80,7 @@ x12 = [ xTwo,xOne];
  
 %prepare the init parameter
 
-    f_st = zeros(Nflt,1);
-    
-    f_st(1:4) =  [1,0,0,0];
-    
-   % f_st = [1,-2,1.5,2, 0,0,0, 0,   0,0,0, 0,   0,0,0, 0  ]';   
-   % f_st = [1,-2,1.5,2, 0,0,0, 0,   0,0,0, 0,   0,0,0, 0  ]';   
-   % f_st = zeros(Nflt,1); f_st(1) = 1;
   
-f_st = f_st/norm(f_st);
- 
-C = zeros(Num_c,Nflt);
-c = ones(2,1);
- 
-i=1;j=1;
-while i<=Nflt   
-    C(j:j+1,i) = c;
-    i=i+1;
-    j= j+2;
-end
  Y_Out = zeros(lenS,1);
  Y_U = zeros(lenS,1);
  Y_D = zeros(lenS,1); 
@@ -109,23 +98,15 @@ end
  end
   
  Pest = 0;
- % down line of GSC beamformer
- Y_Block = xOne - xTwo;
-
- % up line of GSC beamformer 
- Y_Up  = (xOne+xTwo)  /2; % Y_Up 
+ 
+ Y_Block = (xOne - xTwo) ;
+ Y_Up  = (xOne+xTwo)  /2; 
  
  
-% lms = dsp.LMSFilter(   256);
-% [~,e] = lms( Y_Block,Y_Up); 
-% outfx = [e,Y_Block]; 
-% audiowrite([fout 'xlms.wav'],outfx,fs); 
-%  [y,out]=gsc_dual_postfilter([fout 'xlms'] );
-% outfx = [e, out];   
-% audiowrite([fout 'xlms_om.wav'],outfx,fs); 
+  Y_U_B = [Y_Up , Y_Block]; audiowrite([fout '_U_B.wav'],Y_U_B,fs);
+ 
+ 
 
-K = 512;
-alpha = 0.073;  
 om_cnt = 1;
  
  % omlsa parameter
@@ -133,6 +114,7 @@ om_cnt = 1;
  Y_om_in = zeros(NFFT,1);
  U_om_in = zeros(NFFT,1);
  yout_omlsa =  zeros(lenS,1);
+ yout_omlsa2=  zeros(lenS,1);
  k_omlsa = 0;
  
  yout_omlsa_t_vec =  zeros(Nflt,1);
@@ -156,23 +138,24 @@ om_cnt = 1;
  divergeState = 0;
  ekEn = 0; dkEn =0;
  % gsc + dual omlsa  process
- for k=Nflt:lenS - Nflt+1    
+ for k=Nflt+1:lenS - Nflt+1    
     % down line     
      Y_Frame_Block = Y_Block(k-Nflt+1 :k);       
      Y_Frame_up = Y_Up(k-Nflt+1 :k);         
      yB =  Y_Frame_up' * Y_Frame_up;     
-      
+   %   yB =  Y_Frame_Block' * Y_Frame_Block;
+     
      Y_Down = A_st'*Y_Frame_Block;        
      yout = Y_Up(k) - Y_Down ;        
      errork(k) = yout;
       
-     omega = 0.898;
+     omega = 0.958;
      ekEn =  omega* ekEn + (1-omega) * yout*yout;
      dkEn =  omega* dkEn + (1-omega) * Y_Up(k)*Y_Up(k);
  
        
      %% improved nlms
-     omega = 0.898; 
+   
      mode = 1;
      if(mode == 1 ) % orig nlms power estimate
     
@@ -180,7 +163,7 @@ om_cnt = 1;
      mu = alpha ./( Pest + 1e-2);
     
      else % omlsa assist power estimate
-      alpha = 0.158;
+    
       Pest = omega * Pest + (1-omega) * yB;          
       mu = alpha ./( Pest + 1e-2);  
       muarray(k) = mu;
@@ -207,16 +190,17 @@ om_cnt = 1;
       
      A_st = A_st +  mu* yout.* (Y_Frame_Block) ;  
  
-     Y_om_in  = [ Y_om_in(2:NFFT) ; yout];
-     U_om_in  = [ U_om_in(2:NFFT);  Y_Block(k)];
+  Y_om_in  = [ Y_om_in(2:NFFT) ; yout];
+   %   Y_om_in  = [ Y_om_in(2:NFFT) ; Y_Up(k)];
+     U_om_in   = [ U_om_in(2:NFFT);  Y_Block(k)];
   
      if(om_cnt==q_OMLSA)     
-       yout_omlsa_t  =  tf_gsc_dual_postfilter(Y_om_in,U_om_in,k_omlsa+1 );  om_cnt = 0;    
-       %yout_omlsa_t  =  tf_gsc_dual_postfilter2(Y_om_in,U_om_in,k_omlsa+1 );  om_cnt = 0;    
-        
-         %yout_omlsa_t  =  tf_gsc_dual_postfilter(U_om_in,Y_om_in,k_omlsa+1 );  om_cnt = 0; 
-      %  yout_omlsa_t_vec = [ yout_omlsa_t_vec(q_OMLSA+1:2*q_OMLSA);yout_omlsa_t ];
-        
+       yout_omlsa_t  =  tf_gsc_dual_postfilter2(Y_om_in,U_om_in,k_omlsa+1, arg1  , arg2);  om_cnt = 0;    
+     %  yout_omlsa_t  =  tf_gsc_dual_postfilter_ad(Y_om_in,U_om_in,k_omlsa+1, arg1  , arg2);  om_cnt = 0;  
+     %   yout_omlsa_t  =  tf_gsc_dual_postfilter(Y_om_in,U_om_in,k_omlsa+1, arg1  , arg2);  om_cnt = 0;    
+
+     % yout_omlsa_t  =  tf_gsc_dual_postfilter( U_om_in,Y_om_in, k_omlsa+1 , arg1  , arg2);  om_cnt = 0;    
+            
         for tmp = 1: q_OMLSA                
               yout_omlsa_t_vec = [ yout_omlsa_t_vec(2:Nflt);yout_omlsa_t(tmp) ];
               Power_om  = yout_omlsa_t_vec' * yout_omlsa_t_vec;
@@ -225,8 +209,9 @@ om_cnt = 1;
               power_om(k_omlsa * q_OMLSA + tmp) =   (Pest_om );    
               
         end
-         
-        yout_omlsa( k_omlsa*q_OMLSA+1 :(k_omlsa+1)*q_OMLSA ) = yout_omlsa_t;       
+       
+        yout_omlsa( k_omlsa*q_OMLSA+1 :(k_omlsa+1)*q_OMLSA ) = yout_omlsa_t ;  
+     %   yout_omlsa2( k_omlsa*q_OMLSA+1 :(k_omlsa+1)*q_OMLSA ) = yout_omlsa_t2 ;    
         k_omlsa = k_omlsa+1;        
         
      end
@@ -238,23 +223,27 @@ om_cnt = 1;
      
  end
   
- Y_U_B = [Y_Up , Y_Block];
+
  Y_O_B = [Y_Out, Y_Block ];
  Y_U_O = [Y_Up, Y_Out ];
  
- audiowrite([fout '_U_B.wav'],Y_U_B,fs);
+
  audiowrite([fout '_O_B.wav'],Y_O_B,fs); 
  audiowrite([fout '_U_O.wav'],Y_U_O,fs);  
   
- Y_Om_Block = [yout_omlsa, Y_Out];
-  
- audiowrite([fout '_Om_D.wav'],Y_Om_Block,fs); 
+ delaylen = 128;
  
- Y_Om_out = [ yout_omlsa,Y_Block   ];
+ Y_Om_out  = [Y_Out(1:length(Y_Out)-delaylen+1) , yout_omlsa(delaylen:length(Y_Out))];
   
-audiowrite([fout '_Om_Block.wav'],Y_Om_out,fs); 
+ audiowrite([fout '_Om_D.wav'],Y_Om_out,fs); 
+ 
+   Y_O = [yout_omlsa, yout_omlsa ];
+audiowrite([fout '_Om.wav'],Y_O,fs); 
+
+ % Y_O2 = [yout_omlsa2, yout_omlsa2 ];
+%audiowrite([fout '_Om2.wav'],Y_O2,fs); 
    
-power_fig = 1;
+power_fig = 0;
 
 if (power_fig==1)
 
@@ -273,14 +262,11 @@ P2 =   (  yout_omlsa(130:length(yout_omlsa)).^2);
    figure(1);
    x = 1: length(Y_Out_om_d);
    x1 = 1: length(Y_Up);
-   subplot(411  );   plot(  x, Y_Out_om_d ,'b' );   title('1) error omlsa power ratio ')
-   subplot(412   );  plot(  x1, Y_Up.^2  ,'r'  );    title('2) up power')
-   subplot(413   );  plot(  x1, Y_Out.^2  ,'r'  );   title('2) error power')
-   subplot(414   );  plot(  x1, Y_Block.^2  ,'r'  ); title('2) block power')
+%   subplot(411  );   plot(  x, Y_Out_om_d ,'b' );   title('1) error omlsa power ratio ')
+%   subplot(412   );  plot(  x1, Y_Up.^2  ,'r'  );    title('2) up power')
+%   subplot(413   );  plot(  x1, Y_Out.^2  ,'r'  );   title('2) error power')
+%   subplot(414   );  plot(  x1, Y_Block.^2  ,'r'  ); title('2) block power')
    
-%   subplot(513   );  plot(  x, muarray(1:length(Y_Out_om_d)) ,'g'  );  title('3) omlsa power')
-%   subplot(514   );  plot(  x, muarray_om(1:length(Y_Out_om_d)) ,'g'  );  title('3) omlsa power')
-%   subplot(515   );  plot(  x, P_ratio_array(1:length(Y_Out_om_d)) ,'g'  );  title('3) omlsa power')
  end
 fprintf('End of DUAL GSC\n');
 

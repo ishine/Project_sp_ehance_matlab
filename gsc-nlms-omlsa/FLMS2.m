@@ -1,13 +1,13 @@
 function   FLMS2(  ) 
  
 % papare the input data
-finl = './voice/t15_U_B';
-fout = [finl '_flms2_div12'];
+finl = '../../voice/14';
+fout = [finl '_flms2_div13'];
  
 [x,fs]= audioread([finl '.wav']);  % main mic
 %[x2,fs2]= audioread([finr '.wav']); % ref mic
 lambda = 0.88;
-alpha = 0.98/12;
+alpha = 0.98/8;
 filter_length = 512;
 input_signal = x(:,2);
 desired_signal = x(:,1);
@@ -66,7 +66,8 @@ for k=1:Blocks-1
  
     % block k-1, k; transformed input signal U(k) 
     INPUT_SIGNAL = fft( input_signal((k-1)*filter_length+1:(k+1)*filter_length) ,2*filter_length); 
- 
+    DESIRE_SIGNAL = fft( desired_signal((k-1)*filter_length+1:(k+1)*filter_length) ,2*filter_length); 
+
     % block k, output signal y(k), last M elements 
     output = ifft(INPUT_SIGNAL.*FILTER_COEFF); 
     output = output(filter_length+1:2*filter_length,1); 
@@ -82,7 +83,7 @@ for k=1:Blocks-1
     % transformation of estimation error 
     ERROR_VEC = fft([zeros(filter_length,1);error(k*filter_length+1:(k+1)*filter_length)],2*filter_length); 
       
-    p_mode = 2;
+    p_mode = 1;
      
     if(p_mode ==1)
     % estimated power 
@@ -90,7 +91,8 @@ for k=1:Blocks-1
      estimated_power=lambda*estimated_power+(1-lambda)*abs(INPUT_SIGNAL).^2; 
     else
     % 2) combined omlsa pest  
-       estimated_power=lambda*estimated_power+(1-lambda)*abs(INPUT_SIGNAL).^2; 
+    %   estimated_power=lambda*estimated_power+(1-lambda)*abs(INPUT_SIGNAL).^2; 
+      estimated_power=lambda*estimated_power+(1-lambda)*abs(DESIRE_SIGNAL).^2; 
      
          beta = pow_ratio_num;
        if( pow_ratio_num < 0.4)
@@ -121,7 +123,7 @@ for k=1:Blocks-1
             Y_om_in  = [ Y_om_in(q_OMLSA+1:N_OMLSA); err_temp((tmp-1)*q_OMLSA+1:tmp*q_OMLSA)];     
             U_om_in  = [ U_om_in(q_OMLSA+1:N_OMLSA); x_new((tmp-1)*q_OMLSA+1:tmp*q_OMLSA)];
  
-            yout_omlsa_t  =  flms_gsc_dual_postfilter(Y_om_in,U_om_in,k_omlsa+1 );      
+            yout_omlsa_t  =  flms_gsc_dual_postfilter(Y_om_in,U_om_in,k_omlsa+1,30,0.02 );      
             yout_omlsa( k_omlsa*q_OMLSA+1 :(k_omlsa+1)*q_OMLSA ) = yout_omlsa_t;   k_omlsa = k_omlsa+1;            
             
              
